@@ -9,7 +9,7 @@ var Kvt *Boot
 
 type Boot struct {
 	root *node
-	lock *sync.Mutex
+	lock sync.RWMutex
 }
 
 type node struct {
@@ -93,8 +93,8 @@ func cycleSetList(fat *list, chil *list) {
 
 func (b *Boot) Get(key string) (string, error) {
 
-	b.lock.Lock()
-	defer b.lock.Unlock()
+	b.lock.RLock()
+	defer b.lock.RUnlock()
 
 	index, err := tranUint(key)
 	if err != nil {
