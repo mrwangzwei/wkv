@@ -23,7 +23,7 @@ func Test1aa(t *testing.T) {
 }
 
 func randArr(len int) []int {
-	var arr []int
+	arr := make([]int, len)
 	for len > 0 {
 		len--
 		arr = append(arr, rand.Intn(100))
