@@ -1,31 +1,6 @@
 package arr_sort
 
 func QuickSort(arr []int) {
-	quickSort(arr, 0, len(arr)-1)
-}
-
-func quickSort(arr []int, left, right int) {
-	if left >= right {
-		return
-	}
-	flag, leftFlag, rightFlag := arr[left], left, right
-	for right != left {
-		for right > left && arr[right] >= flag {
-			right--
-		}
-		for left < right && arr[left] <= flag {
-			left++
-		}
-		if right > left {
-			arr[right], arr[left] = arr[left], arr[right]
-		}
-	}
-	arr[right], arr[leftFlag] = flag, arr[right]
-	quickSort(arr, leftFlag, left)
-	quickSort(arr, right+1, rightFlag)
-}
-
-func QuickSortTwo(arr []int) {
 	if len(arr) <= 1 {
 		return
 	}
@@ -42,8 +17,8 @@ func QuickSortTwo(arr []int) {
 		}
 	}
 	arr[head] = mid
-	QuickSortTwo(arr[:head])
-	QuickSortTwo(arr[head+1:])
+	QuickSort(arr[:head])
+	QuickSort(arr[head+1:])
 }
 
 

@@ -10,7 +10,7 @@ import (
 func Test1aa(t *testing.T) {
 	arr := randArr(10000)
 	start := time.Now().UnixNano()
-	QuickSortTwo(arr)
+	QuickSort(arr)
 	end := time.Now().UnixNano()
 	fmt.Println(end - start)
 
