@@ -67,7 +67,7 @@ func insert(root, newNode *node) {
 	}
 }
 
-func matchList(node *node, newNode *node) {
+func matchList(node, newNode *node) {
 	if node.value.key == newNode.value.key {
 		node.value.value = newNode.value.value
 	} else {
@@ -79,7 +79,7 @@ func matchList(node *node, newNode *node) {
 	}
 }
 
-func cycleSetList(fat *list, chil *list) {
+func cycleSetList(fat, chil *list) {
 	if fat.next == nil {
 		fat.next = chil
 		return

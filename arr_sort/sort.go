@@ -21,6 +21,26 @@ func QuickSort(arr []int) {
 	QuickSort(arr[head+1:])
 }
 
+func QuickSortDesc(arr []int) {
+	if len(arr) <= 1 {
+		return
+	}
+	mid, i := arr[0], 1
+	head, tail := 0, len(arr)-1
+	for head < tail {
+		if arr[i] > mid {
+			arr[i], arr[head] = arr[head], arr[i]
+			head++
+			i++
+		} else {
+			arr[i], arr[tail] = arr[tail], arr[i]
+			tail--
+		}
+	}
+	arr[head] = mid
+	QuickSortDesc(arr[:head])
+	QuickSortDesc(arr[head+1:])
+}
 
 //php写法
 func QuickSortPhp(arr []int) []int {
