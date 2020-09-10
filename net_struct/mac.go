@@ -7,13 +7,13 @@ MAC Header
 DAddressMac:目的mac		6bytes
 SAddressMac:源mac	6bytes
 ProtocolType:协议类型	2bytes
-Data:数据	46-1500bytes
+Data:数据	MTU 46-1500bytes
 FCS:校验和。CRC算法校验	4bytes
 */
 type Mac struct {
-	DAddressMac  [6]byte
-	SAddressMac  [6]byte
-	ProtocolType [2]byte
-	Data         []byte
-	FCS          [4]byte
+	DAddressMac  Bytes
+	SAddressMac  Bytes
+	ProtocolType Bytes
+	Data         Bytes
+	FCS          Bytes
 }
