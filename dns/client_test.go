@@ -1,7 +1,10 @@
 package dns
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestSend(t *testing.T) {
-	Send("114.114.114.114:53", "www.baidu.com")
+	fmt.Println(simpleSend("www.oylw.xyz"))
 }

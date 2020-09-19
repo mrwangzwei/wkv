@@ -8,8 +8,19 @@ import (
 	"time"
 )
 
+func simpleSend(domain string) ([]string, error) {
+	ns, err := net.LookupHost(domain)
+	if err != nil {
+		return nil, err
+	}
+	ipArr := make([]string, len(ns))
+	for _, n := range ns {
+		ipArr = append(ipArr, n)
+	}
+	return ipArr, nil
+}
+
 func Send(addr, domain string) {
-	var err error
 	conn, err := net.Dial("udp", addr)
 	defer conn.Close()
 
@@ -32,7 +43,7 @@ func Send(addr, domain string) {
 	err = binary.Write(&buffer, binary.BigEndian, ParseDomainName(domain))
 	err = binary.Write(&buffer, binary.BigEndian, requestQuery)
 
-	buf := make([]byte, 512)
+	buf := make([]byte, dnsPacketLen)
 	t1 := time.Now()
 	_, err = conn.Write(buffer.Bytes())
 	fmt.Println("conn.Write", err)

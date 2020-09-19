@@ -2,8 +2,9 @@ package dns
 
 import (
 	"fmt"
+	"log"
 	"net"
-	"wkv/wkv_a"
+	"time"
 )
 
 type DNS interface {
@@ -12,34 +13,55 @@ type DNS interface {
 
 type dnsServer struct {
 	Port  int
+	TTL   int
 	conn  *net.UDPConn
-	table *wkv_a.Boot
+	table []map[string][]ipInfo
 }
 
-func NewServer(port int) DNS {
+type ipInfo struct {
+	ipAddr   string
+	country  string
+	province string
+	city     string
+}
+
+func NewServer(port, ttl int) DNS {
 	return &dnsServer{
 		Port: port,
+		TTL:  ttl,
 	}
 }
 
-//dns数据包长度
-const dnsPacketLen = 512
-
 func (s *dnsServer) Listen() {
 	var err error
-	s.table = &wkv_a.Boot{}
+	//udp监听
 	s.conn, err = net.ListenUDP("udp", &net.UDPAddr{Port: s.Port})
-	fmt.Println("net.ListenUDP", err)
+	if err != nil {
+		log.Printf(err.Error())
+		return
+	}
 	defer s.conn.Close()
 
 	for {
 		buf := make([]byte, dnsPacketLen)
+
+		//读取接收到的dns协议包
 		_, addr, err := s.conn.ReadFromUDP(buf)
 		fmt.Println("conn.ReadFromUDP", addr, err, buf)
 		if err != nil {
 			continue
 		}
 
+		//解析dns协议包得到domain
+
+		nowTime := time.Now().Unix()
+		//先从缓存找到ip信息，并且看是否超时，超时就重新从dns流程获取
+
+		//缓存没有的话就走正常的dns。本地dns服务器-----(.com)---->顶级dns服务器----(.baidu.com)--->权威dns服务器
+
+		//存入缓存，更新超时时间
+
+		//拼装结构，返回结果
 	}
 }
 
