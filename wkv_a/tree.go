@@ -5,11 +5,19 @@ import (
 	"sync"
 )
 
-var Kvt *Boot
+type WKV interface {
+	Get(string) (string, error)
+	Set(string, string) error
+	Del(string) error
+}
 
 type Boot struct {
 	root *node
 	lock sync.RWMutex
+}
+
+func NewWkv() WKV {
+	return &Boot{}
 }
 
 type node struct {
@@ -132,7 +140,8 @@ func searchFormList(l *list, key string) (string, bool) {
 }
 
 func (b *Boot) Del(key string) error {
-
+	b.lock.Lock()
+	defer b.lock.Unlock()
 	index, err := tranUint(key)
 	if err != nil {
 		return err

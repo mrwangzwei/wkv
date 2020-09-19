@@ -6,7 +6,7 @@ import (
 )
 
 func TestAaaa(t *testing.T) {
-	Kvt = &Boot{}
+	Kvt := NewWkv()
 	err := Kvt.Set("aaaaa", "111111")
 	err = Kvt.Set("bbbbb", "222222")
 	err = Kvt.Set("ccccc", "333333")
@@ -29,7 +29,5 @@ func TestAaaa(t *testing.T) {
 	fmt.Println(err)
 	eee, err = Kvt.Get("eeeee")
 	fmt.Println(eee)
-
-
 
 }
