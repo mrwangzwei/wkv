@@ -14,8 +14,8 @@ func simpleSend(domain string) ([]string, error) {
 		return nil, err
 	}
 	ipArr := make([]string, len(ns))
-	for _, n := range ns {
-		ipArr = append(ipArr, n)
+	for index, n := range ns {
+		ipArr[index] = n
 	}
 	return ipArr, nil
 }
