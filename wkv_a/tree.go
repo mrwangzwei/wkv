@@ -11,13 +11,13 @@ type WKV interface {
 	Del(string) error
 }
 
-type Boot struct {
+type root struct {
 	root *node
 	lock sync.RWMutex
 }
 
 func NewWkv() WKV {
-	return &Boot{}
+	return &root{}
 }
 
 type node struct {
@@ -33,7 +33,7 @@ type list struct {
 	next  *list
 }
 
-func (b *Boot) Set(key string, content string) error {
+func (b *root) Set(key string, content string) error {
 
 	b.lock.Lock()
 	defer b.lock.Unlock()
@@ -99,7 +99,7 @@ func cycleSetList(fat, chil *list) {
 	cycleSetList(fat.next, chil)
 }
 
-func (b *Boot) Get(key string) (string, error) {
+func (b *root) Get(key string) (string, error) {
 
 	b.lock.RLock()
 	defer b.lock.RUnlock()
@@ -139,7 +139,7 @@ func searchFormList(l *list, key string) (string, bool) {
 	return searchFormList(l.next, key)
 }
 
-func (b *Boot) Del(key string) error {
+func (b *root) Del(key string) error {
 	b.lock.Lock()
 	defer b.lock.Unlock()
 	index, err := tranUint(key)

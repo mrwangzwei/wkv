@@ -11,6 +11,7 @@ var table map[string]*domainInfo
 var tableLock sync.RWMutex
 
 type domainInfo struct {
+	domainLock sync.RWMutex
 	lastTime   int64
 	pointScore int
 	times      int
@@ -53,13 +54,16 @@ func updateDomain(domain string) error {
 }
 
 func updateRepeat(domain string, newIpList []string) []string {
+	tableLock.Lock()
+	defer tableLock.Unlock()
+
 	if table[domain] == nil {
 		emp := make([]string, 0, 0)
 		return emp
 	}
 
-	tableLock.Lock()
-	defer tableLock.Unlock()
+	table[domain].domainLock.Lock()
+	defer table[domain].domainLock.Unlock()
 
 	repeat := make([]string, 0, len(table[domain].ipList))
 	for _, newIP := range newIpList {
@@ -83,14 +87,17 @@ func updateRepeat(domain string, newIpList []string) []string {
 }
 
 func delNotIN(domain string, newIpList []string) {
+	tableLock.Lock()
+	defer tableLock.Unlock()
+
 	var oldExist bool
 	var delIndex []int
 	if table[domain] == nil {
 		return
 	}
 
-	tableLock.Lock()
-	defer tableLock.Unlock()
+	table[domain].domainLock.Lock()
+	defer table[domain].domainLock.Unlock()
 
 	for index, old := range table[domain].ipList {
 		oldExist = false
@@ -109,11 +116,10 @@ func delNotIN(domain string, newIpList []string) {
 }
 
 func insertNew(domain string, newIpList, repeat []string) {
-
-	var isNew bool
-
 	tableLock.Lock()
 	defer tableLock.Unlock()
+
+	var isNew bool
 
 	for _, newIP := range newIpList {
 		isNew = true
@@ -128,7 +134,9 @@ func insertNew(domain string, newIpList, repeat []string) {
 					lastTime: time.Now().Unix(),
 				}
 			}
+
 			addr, _ := RequestIpAddr(newIP)
+			table[domain].domainLock.Lock()
 			table[domain].ipList = append(table[domain].ipList, ipInfo{
 				weight:    0,
 				ipAddr:    newIP,
@@ -138,14 +146,22 @@ func insertNew(domain string, newIpList, repeat []string) {
 				longitude: addr.Content.Point.Y,
 				latitude:  addr.Content.Point.X,
 			})
+			table[domain].domainLock.Unlock()
 		}
 	}
 }
 
 func refreshWeight(domain string) {
+	tableLock.Lock()
+	defer tableLock.Unlock()
+
 	if table[domain] == nil || len(table[domain].ipList) < 1 {
 		return
 	}
+
+	table[domain].domainLock.Lock()
+	defer table[domain].domainLock.Unlock()
+
 	pointScore := 0
 	for index, item := range table[domain].ipList {
 		table[domain].ipList[index].pointStart = pointScore
@@ -157,6 +173,9 @@ func refreshWeight(domain string) {
 }
 
 func searchWeightMode(domain string) (string, error) {
+	tableLock.RLock()
+	defer tableLock.RUnlock()
+
 	//不存在的话走dns流程
 	if table[domain] == nil || len(table[domain].ipList) < 1 {
 		list, err := simpleSend(domain)
@@ -168,6 +187,10 @@ func searchWeightMode(domain string) (string, error) {
 		}
 		return list[0], nil
 	}
+
+	table[domain].domainLock.Lock()
+	defer table[domain].domainLock.Unlock()
+
 	point := table[domain].times % table[domain].pointScore
 	table[domain].times++
 	for _, item := range table[domain].ipList {
@@ -186,17 +209,23 @@ type clientIPInfo struct {
 }
 
 func searchClientMode(domain string) ([]clientIPInfo, error) {
+	tableLock.RLock()
 	//不存在的话走dns流程
 	if table[domain] == nil || len(table[domain].ipList) < 1 {
 		list, err := simpleSend(domain)
 		if err != nil {
 			return nil, err
 		}
+		tableLock.RUnlock()
 		insertNew(domain, list, nil)
 	}
 	if table[domain] == nil {
 		return nil, nil
 	}
+
+	table[domain].domainLock.RLock()
+	defer table[domain].domainLock.RUnlock()
+
 	clientIpList := make([]clientIPInfo, len(table[domain].ipList))
 	for index, ip := range table[domain].ipList {
 		clientIpList[index] = clientIPInfo{

@@ -92,9 +92,8 @@ func (s *dnsServer) AddWeightIpInfo(domain, ip string, weight int) error {
 	if s.mode != WeightMode {
 		return errors.New("server is not in weight mode")
 	}
-	tableLock.Lock()
-	defer tableLock.Unlock()
 
+	tableLock.Lock()
 	//存在的话直接替换权重
 	var ipExist bool
 	if table[domain] != nil {
@@ -116,6 +115,7 @@ func (s *dnsServer) AddWeightIpInfo(domain, ip string, weight int) error {
 				lastTime: time.Now().Unix(),
 			}
 		}
+		table[domain].domainLock.Lock()
 		table[domain].ipList = append(table[domain].ipList, ipInfo{
 			weight:    weight,
 			ipAddr:    ip,
@@ -125,7 +125,10 @@ func (s *dnsServer) AddWeightIpInfo(domain, ip string, weight int) error {
 			longitude: info.Content.Point.Y,
 			latitude:  info.Content.Point.X,
 		})
+		table[domain].domainLock.Unlock()
 	}
+	tableLock.Unlock()
+	//刷权重
 	refreshWeight(domain)
 	return nil
 }
