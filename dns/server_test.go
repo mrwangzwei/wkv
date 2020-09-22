@@ -8,34 +8,12 @@ import (
 //sync.Map{} 提供并发锁安全锁接口
 
 func TestNewServer(t *testing.T) {
-	fmt.Println(aaa(1))
-}
-
-func bb() {
-	defer func() {
-		fmt.Println("aaaa")
-	}()
-
-	defer func() {
-		fmt.Println("bbbb")
-	}()
-}
-
-func aaa(n int) (r int) {
-	defer func() {
-		r += n
-		fmt.Println("r += n", r, n)
-		if err := recover(); err != nil {
-			fmt.Println(err)
-		}
-	}()
-	var f func()
-
-	defer f()
-
-	f = func() {
-		r += 2
-	}
-
-	return n + 1
+	s, err := NewServer(9991, 30, WeightMode)
+	fmt.Println(err)
+	err = s.AddWeightIpInfo("wzw", "127.0.0.1", 1)
+	err = s.AddWeightIpInfo("wzw", "127.0.0.2", 2)
+	err = s.AddWeightIpInfo("wzw", "127.0.0.3", 3)
+	fmt.Println(table)
+	err = s.Listen()
+	fmt.Println(err)
 }

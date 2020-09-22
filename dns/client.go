@@ -3,6 +3,7 @@ package dns
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"net"
 	"time"
@@ -50,6 +51,24 @@ func Send(addr, domain string) {
 
 	length, err := conn.Read(buf)
 	t := time.Now().Sub(t1)
-	fmt.Println("conn.Read", buf, length, t)
+	fmt.Println("conn.Read", string(buf))
+	fmt.Println("conn.Read", length, t)
 
+}
+
+func SendJson(addr, domain string) {
+	mmp := make(map[string]string)
+	mmp["domain"] = domain
+	val, _ := json.Marshal(mmp)
+	conn, err := net.Dial("udp", addr)
+	defer conn.Close()
+
+	t1 := time.Now()
+	_, err = conn.Write(val)
+	fmt.Println("conn.Write", err)
+	buf := make([]byte, 512)
+	_, err = conn.Read(buf)
+	t := time.Now().Sub(t1)
+
+	fmt.Println(string(buf), t, err)
 }

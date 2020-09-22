@@ -12,7 +12,7 @@ import (
 
 type DNS interface {
 	Listen() error
-	AddWeightIpInfo(string, string, int) error
+	AddWeightIpInfo(domain string, ip string, weight int) error
 }
 
 //服务模式
@@ -24,9 +24,9 @@ const (
 )
 
 type dnsServer struct {
-	port int64
-	ttl  int64
-	mode string
+	Port int64
+	TTL  int64
+	Mode string
 	conn *net.UDPConn
 	lock sync.RWMutex
 }
@@ -44,9 +44,9 @@ func NewServer(port, ttl int64, mode string) (DNS, error) {
 		return nil, errors.New("mode is not available")
 	}
 	s := &dnsServer{
-		port: port,
-		ttl:  ttl,
-		mode: mode,
+		Port: port,
+		TTL:  ttl,
+		Mode: mode,
 	}
 	table = map[string]*domainInfo{}
 	return s, nil
@@ -55,7 +55,7 @@ func NewServer(port, ttl int64, mode string) (DNS, error) {
 func (s *dnsServer) Listen() error {
 	var err error
 	//udp监听
-	s.conn, err = net.ListenUDP("udp", &net.UDPAddr{Port: int(s.port)})
+	s.conn, err = net.ListenUDP("udp", &net.UDPAddr{Port: int(s.Port)})
 	if err != nil {
 		log.Printf(err.Error())
 		return err
@@ -66,30 +66,30 @@ func (s *dnsServer) Listen() error {
 		buf := make([]byte, dnsPacketLen)
 
 		//读取接收到的dns协议包
-		_, addr, err := s.conn.ReadFromUDP(buf)
-		fmt.Println("conn.ReadFromUDP", addr, err, buf)
+		length, addr, err := s.conn.ReadFromUDP(buf)
+		log.Println("conn.ReadFromUDP", addr, err, string(buf))
 		if err != nil {
 			log.Printf(err.Error())
 			continue
 		}
 
-		//解析dns协议包得到domain
+		//todo 解析dns协议包得到domain
 
-		//nowTime := time.Now().Unix()
-		//先从缓存找到ip信息，并且看是否超时，超时就重新从dns流程获取
+		mmp := make(map[string]string)
+		err = json.Unmarshal(buf[:length], &mmp)
+		fmt.Println("json.Unmarshal(buf, &mmp)", err, mmp)
+		var domain string
+		if val, ok := mmp["domain"]; ok {
+			domain = val
+		}
+		fmt.Println(domain)
 
-		//缓存没有的话就走正常的dns。本地dns服务器-----(.com)---->顶级dns服务器----(.baidu.com)--->权威dns服务器
-
-		//根据ip获取地理信息
-
-		//存入缓存，更新超时时间
-
-		//拼装结构，返回结果
+		go searchAndRespone(s, domain, addr)
 	}
 }
 
 func (s *dnsServer) AddWeightIpInfo(domain, ip string, weight int) error {
-	if s.mode != WeightMode {
+	if s.Mode != WeightMode {
 		return errors.New("server is not in weight mode")
 	}
 
@@ -134,7 +134,7 @@ func (s *dnsServer) AddWeightIpInfo(domain, ip string, weight int) error {
 }
 
 func (s *dnsServer) Search(domain string) ([]byte, error) {
-	switch s.mode {
+	switch s.Mode {
 	case WeightMode:
 		info, err := searchWeightMode(domain)
 		if err != nil {
@@ -142,6 +142,15 @@ func (s *dnsServer) Search(domain string) ([]byte, error) {
 		}
 		return []byte(info), nil
 	case ClientMode:
+		//先从缓存找到ip信息，并且看是否超时，超时就重新从dns流程获取
+		tableLock.RLock()
+		if table[domain] != nil && table[domain].lastTime+s.TTL < time.Now().Unix() {
+			tableLock.RUnlock()
+			err := updateDomain(domain)
+			if err != nil {
+				log.Println(err)
+			}
+		}
 		info, err := searchClientMode(domain)
 		if err != nil {
 			return nil, err
@@ -150,5 +159,17 @@ func (s *dnsServer) Search(domain string) ([]byte, error) {
 		return res, nil
 	default:
 		return nil, errors.New("unknown mode")
+	}
+}
+
+func searchAndRespone(s *dnsServer, domain string, addr *net.UDPAddr) {
+	res, err := s.Search(domain)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	_, err = s.conn.WriteToUDP(res, addr)
+	if err != nil {
+		log.Println(err)
 	}
 }

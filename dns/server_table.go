@@ -30,6 +30,7 @@ type ipInfo struct {
 	latitude   string
 }
 
+//缓存没有的话就走正常的dns。本地dns服务器-----(.com)---->顶级dns服务器----(.baidu.com)--->权威dns服务器
 func updateDomain(domain string) error {
 	list, err := simpleSend(domain)
 	if err != nil {
@@ -48,7 +49,9 @@ func updateDomain(domain string) error {
 	//新增的ip
 	insertNew(domain, list, repeat)
 
+	tableLock.Lock()
 	table[domain].lastTime = time.Now().Unix()
+	tableLock.Unlock()
 
 	return nil
 }
@@ -135,6 +138,7 @@ func insertNew(domain string, newIpList, repeat []string) {
 				}
 			}
 
+			//根据ip获取地理信息
 			addr, _ := RequestIpAddr(newIP)
 			table[domain].domainLock.Lock()
 			table[domain].ipList = append(table[domain].ipList, ipInfo{
