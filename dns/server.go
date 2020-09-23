@@ -180,6 +180,7 @@ const MaxBufCount = (1 << 7) - 1
 
 //控制每次传512字节
 //第一个字节做标志位,第一位（是否还有下一个包），后7位表当前第几个包（即最大127个包）
+//发包超过最大重试次数就直接跳过
 func writeUdpCtrl(conn *net.UDPConn, buf []byte, addr *net.UDPAddr) {
 	nowBag := 0
 	for {

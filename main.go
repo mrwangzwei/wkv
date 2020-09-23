@@ -1,9 +1,14 @@
 package main
 
-import "wkv/dns"
+import (
+	"fmt"
+)
 
 func main() {
-	dns.SendJson("127.0.0.1:9991", "www.163.com")
+	//dns.SendJson("127.0.0.1:9991", "www.163.com")
+
+	//测试recover
+	aaa()
 
 	////优雅退出测试
 	//sigs := make(chan os.Signal, 1)
@@ -45,4 +50,14 @@ func main() {
 	//	}
 	//}(ch)
 	//time.Sleep(time.Duration(1) * time.Second)
+}
+
+func aaa() {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println(1111)
+			fmt.Println(err)
+		}
+	}()
+	panic("aaaaaaaaa")
 }
