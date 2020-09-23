@@ -123,7 +123,6 @@ func insertNew(domain string, newIpList, repeat []string) {
 	defer tableLock.Unlock()
 
 	var isNew bool
-
 	for _, newIP := range newIpList {
 		isNew = true
 		for _, i := range repeat {
@@ -206,23 +205,27 @@ func searchWeightMode(domain string) (string, error) {
 }
 
 type clientIPInfo struct {
-	ip       string
-	country  string
-	province string
-	city     string
+	IP       string
+	Country  string
+	Province string
+	City     string
 }
 
 func searchClientMode(domain string) ([]clientIPInfo, error) {
 	tableLock.RLock()
 	//不存在的话走dns流程
+
 	if table[domain] == nil || len(table[domain].ipList) < 1 {
+		tableLock.RUnlock()
 		list, err := simpleSend(domain)
 		if err != nil {
 			return nil, err
 		}
-		tableLock.RUnlock()
 		insertNew(domain, list, nil)
+	} else {
+		tableLock.RUnlock()
 	}
+
 	if table[domain] == nil {
 		return nil, nil
 	}
@@ -233,10 +236,10 @@ func searchClientMode(domain string) ([]clientIPInfo, error) {
 	clientIpList := make([]clientIPInfo, len(table[domain].ipList))
 	for index, ip := range table[domain].ipList {
 		clientIpList[index] = clientIPInfo{
-			ip:       ip.ipAddr,
-			country:  ip.country,
-			province: ip.province,
-			city:     ip.city,
+			IP:       ip.ipAddr,
+			Country:  ip.country,
+			Province: ip.province,
+			City:     ip.city,
 		}
 	}
 	return clientIpList, nil

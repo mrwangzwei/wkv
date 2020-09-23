@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net"
 	"time"
 )
@@ -56,6 +57,8 @@ func Send(addr, domain string) {
 
 }
 
+//read 每个包的大小固定是512，其中第一字节做标志位
+//bagMap 作为收包存储器，按包的顺序存储到对应的索引下
 func SendJson(addr, domain string) {
 	mmp := make(map[string]string)
 	mmp["domain"] = domain
@@ -66,9 +69,38 @@ func SendJson(addr, domain string) {
 	t1 := time.Now()
 	_, err = conn.Write(val)
 	fmt.Println("conn.Write", err)
-	buf := make([]byte, 512)
-	_, err = conn.Read(buf)
-	t := time.Now().Sub(t1)
 
-	fmt.Println(string(buf), t, err)
+	bagMap := make([][]byte, MaxBufCount)
+	for {
+		buf := make([]byte, 512)
+		_, err = conn.Read(buf)
+
+		if err != nil {
+			fmt.Println(err)
+			break
+		}
+		if buf[0] < BufNextExist {
+			bagMap[buf[0]] = buf
+			break
+		} else {
+			bagMap[buf[0]-BufNextExist] = buf
+		}
+	}
+
+	var result []byte
+	lostCount := 0
+	for _, item := range bagMap {
+		if len(item) > 1 {
+			result = append(result, item[1:]...)
+		} else {
+			lostCount++
+			if lostCount >= 3 {
+				log.Printf("nil bag over %d times", lostCount)
+				break
+			}
+		}
+	}
+
+	t := time.Now().Sub(t1)
+	fmt.Println(string(result), t)
 }

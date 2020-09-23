@@ -3,7 +3,6 @@ package dns
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net"
 	"sync"
@@ -73,17 +72,13 @@ func (s *dnsServer) Listen() error {
 			continue
 		}
 
-		//todo 解析dns协议包得到domain
-
+		//todo 解析dns协议包得到domain,暂时解不来。。。。先json代替一下实现过程
 		mmp := make(map[string]string)
 		err = json.Unmarshal(buf[:length], &mmp)
-		fmt.Println("json.Unmarshal(buf, &mmp)", err, mmp)
 		var domain string
 		if val, ok := mmp["domain"]; ok {
 			domain = val
 		}
-		fmt.Println(domain)
-
 		go searchAndRespone(s, domain, addr)
 	}
 }
@@ -150,6 +145,8 @@ func (s *dnsServer) Search(domain string) ([]byte, error) {
 			if err != nil {
 				log.Println(err)
 			}
+		} else {
+			tableLock.RUnlock()
 		}
 		info, err := searchClientMode(domain)
 		if err != nil {
@@ -163,13 +160,61 @@ func (s *dnsServer) Search(domain string) ([]byte, error) {
 }
 
 func searchAndRespone(s *dnsServer, domain string, addr *net.UDPAddr) {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Println(err)
+		}
+	}()
 	res, err := s.Search(domain)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	_, err = s.conn.WriteToUDP(res, addr)
-	if err != nil {
-		log.Println(err)
+	go writeUdpCtrl(s.conn, res, addr)
+}
+
+const BufNextExist = 1 << 7 //10000000	,还没传完
+const BufNextNone = 0       //00000000	,传完了
+const DataBufSize = 511
+const MaxBufCount = (1 << 7) - 1
+
+//控制每次传512字节
+//第一个字节做标志位,第一位（是否还有下一个包），后7位表当前第几个包（即最大127个包）
+func writeUdpCtrl(conn *net.UDPConn, buf []byte, addr *net.UDPAddr) {
+	nowBag := 0
+	for {
+		leftBufLen := len(buf)
+		if (leftBufLen / DataBufSize) > MaxBufCount {
+			log.Println("beyond the max buf count")
+			return
+		}
+		if leftBufLen < 1 {
+			return
+		}
+
+		sendBuf := make([]byte, 1)
+		if leftBufLen <= DataBufSize {
+			sendBuf[0] = byte(BufNextNone + nowBag)
+			sendBuf = append(sendBuf, buf[:]...)
+			buf = append(buf[0:0])
+		} else {
+			sendBuf[0] = byte(BufNextExist + nowBag)
+			sendBuf = append(sendBuf, buf[:DataBufSize]...)
+			buf = append(buf[0:0], buf[DataBufSize:]...)
+		}
+
+		times := 1
+		for _, err := conn.WriteToUDP(sendBuf, addr); err != nil; {
+			log.Println(err)
+			if times > 10 {
+				log.Println("resend over times")
+				log.Println("nowBag", nowBag)
+				log.Println("leftBufLen", leftBufLen)
+				break
+			}
+			times++
+		}
+		nowBag++
 	}
+
 }
