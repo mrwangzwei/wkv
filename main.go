@@ -2,24 +2,12 @@ package main
 
 import (
 	"fmt"
+	"wkv/dns"
 )
 
 func main() {
-	i := 0
-Cycle:
-	if i >= 5 {
-		goto Exit
-	}
-	{
-		k := i + i
-		fmt.Println(k)
-	}
-	i++
-	fmt.Println(i)
-	goto Cycle
-Exit:
 
-	//dns.SendJson("127.0.0.1:9991", "www.163.com")
+	dns.SendJson("127.0.0.1:9991", "wzw")
 
 	////测试recover
 	//aaa()
