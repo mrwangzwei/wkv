@@ -5,10 +5,24 @@ import (
 )
 
 func main() {
+	i := 0
+Cycle:
+	if i >= 5 {
+		goto Exit
+	}
+	{
+		k := i + i
+		fmt.Println(k)
+	}
+	i++
+	fmt.Println(i)
+	goto Cycle
+Exit:
+
 	//dns.SendJson("127.0.0.1:9991", "www.163.com")
 
-	//测试recover
-	aaa()
+	////测试recover
+	//aaa()
 
 	////优雅退出测试
 	//sigs := make(chan os.Signal, 1)
