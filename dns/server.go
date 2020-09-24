@@ -186,7 +186,7 @@ func writeUdpCtrl(conn *net.UDPConn, buf []byte, addr *net.UDPAddr) {
 	for {
 		leftBufLen := len(buf)
 		if (leftBufLen / DataBufSize) > MaxBufCount {
-			log.Println("beyond the max buf count")
+			log.Println("over the max buf count")
 			return
 		}
 		if leftBufLen < 1 {
