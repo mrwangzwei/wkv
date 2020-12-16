@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-type pool struct {
+type Pool struct {
 	poolSize int
 	taskChan chan *task
 	running  int
@@ -14,11 +14,11 @@ type pool struct {
 
 var pw sync.WaitGroup
 
-func NewPool(size int) (*pool, error) {
+func NewPool(size int) (*Pool, error) {
 	if size <= 0 {
 		return nil, errors.New("invalid pool size")
 	}
-	return &pool{
+	return &Pool{
 		poolSize: size,
 		taskChan: make(chan *task),
 		lc:       sync.Mutex{},
@@ -26,7 +26,7 @@ func NewPool(size int) (*pool, error) {
 }
 
 //任务写入
-func (p *pool) AddTask(t *task) error {
+func (p *Pool) AddTask(t *task) {
 	//协程数未满时再开新的协程
 	if p.running < p.poolSize {
 		p.incr()
@@ -34,22 +34,21 @@ func (p *pool) AddTask(t *task) error {
 	}
 
 	p.taskChan <- t
-	return nil
 }
 
-func (p *pool) incr() {
+func (p *Pool) incr() {
 	defer p.lc.Unlock()
 	p.lc.Lock()
 	p.running++
 }
 
-func (p *pool) decr() {
+func (p *Pool) decr() {
 	defer p.lc.Unlock()
 	p.lc.Lock()
 	p.running--
 }
 
-func (p *pool) worker() {
+func (p *Pool) worker() {
 	defer p.decr()
 	for {
 		select {
@@ -63,15 +62,15 @@ func (p *pool) worker() {
 	}
 }
 
-func (p *pool) NewTask(f HandleF, params interface{}, ph PHandleF) *task {
+func (p *Pool) NewTask(f handleF, params interface{}, ph pHandleF) *task {
 	return &task{
-		params:  params,
-		taskId:  newTaskId(),
-		handle:  f,
-		pHandle: ph,
+		params: params,
+		taskId: newTaskId(),
+		h:      f,
+		ph:     ph,
 	}
 }
 
-func (p *pool) Wait() {
+func (p *Pool) Wait() {
 	pw.Wait()
 }
