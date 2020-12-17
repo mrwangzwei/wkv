@@ -9,10 +9,9 @@ type Pool struct {
 	poolSize int
 	taskChan chan *task
 	running  int
-	lc       sync.Mutex
+	lc       *sync.Mutex
+	wg       *sync.WaitGroup
 }
-
-var pw sync.WaitGroup
 
 func NewPool(size int) (*Pool, error) {
 	if size <= 0 {
@@ -21,7 +20,8 @@ func NewPool(size int) (*Pool, error) {
 	return &Pool{
 		poolSize: size,
 		taskChan: make(chan *task),
-		lc:       sync.Mutex{},
+		lc:       &sync.Mutex{},
+		wg:       &sync.WaitGroup{},
 	}, nil
 }
 
@@ -56,8 +56,8 @@ func (p *Pool) worker() {
 			if ok != true {
 				return
 			}
-			pw.Add(1)
-			w.execute()
+			p.wg.Add(1)
+			w.execute(p)
 		}
 	}
 }
@@ -65,12 +65,11 @@ func (p *Pool) worker() {
 func (p *Pool) NewTask(f handleF, params interface{}, ph pHandleF) *task {
 	return &task{
 		params: params,
-		taskId: newTaskId(),
 		h:      f,
 		ph:     ph,
 	}
 }
 
 func (p *Pool) Wait() {
-	pw.Wait()
+	p.wg.Wait()
 }

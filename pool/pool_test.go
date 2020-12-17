@@ -2,19 +2,43 @@ package pool
 
 import (
 	"fmt"
+	"sync"
 	"testing"
-	"time"
 )
 
-func TestPool(t *testing.T) {
-	p, err := NewPool(3)
+func Test_Pool(t *testing.T) {
+	withPool()
+}
+
+func Test_NoPool(t *testing.T) {
+	noPool()
+}
+
+func noPool() {
+	var wg sync.WaitGroup
+	for i := 0; i < 2000; i++ {
+		wg.Add(1)
+		go func(i interface{}) {
+			defer func() {
+				wg.Done()
+				if r := recover(); r != nil {
+					fmt.Println(r)
+				}
+			}()
+			_ = testFunA(i)
+		}(i)
+	}
+	wg.Wait()
+}
+
+func withPool() {
+	p, err := NewPool(20)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	for i := 0; i < 20; i++ {
+	for i := 0; i < 2000; i++ {
 		p.AddTask(p.NewTask(testFunA, i, errHandle))
-		time.Sleep(time.Second) //加这个测一下协程数是不是递增的
 	}
 	p.Wait() //等所有task执行完
 }

@@ -12,13 +12,13 @@ func Test1aa(t *testing.T) {
 	start := time.Now().UnixNano()
 	QuickSort(arr)
 	end := time.Now().UnixNano()
-	fmt.Println(end - start)
+	fmt.Println("QuickSort Nano", end-start)
 
 	arr2 := randArr(10000)
 	start = time.Now().UnixNano()
 	QuickSortPhp(arr2)
 	end = time.Now().UnixNano()
-	fmt.Println(end - start)
+	fmt.Println("QuickSortPhp Nano", end-start)
 
 }
 
