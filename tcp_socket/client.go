@@ -1,12 +1,9 @@
 package tcp_socket
 
 import (
-	"bufio"
 	"fmt"
-	"io"
 	"net"
 	"testing"
-	"time"
 )
 
 func TestClient(t *testing.T) {
@@ -34,28 +31,7 @@ func Client() {
 
 func onMessageReceived(conn *net.TCPConn) {
 
-	reader := bufio.NewReader(conn)
-	b := []byte(conn.LocalAddr().String() + " Say hello to Server... \n")
-	conn.Write(b)
-	for {
-		msg, err := reader.ReadString('\n')
-		fmt.Println("ReadString")
-		fmt.Println(msg)
-
-		if err != nil || err == io.EOF {
-			fmt.Println(err)
-			break
-		}
-		time.Sleep(time.Second * 2)
-
-		fmt.Println("writing...")
-
-		b := []byte(conn.LocalAddr().String() + " write data to Server... \n")
-		_, err = conn.Write(b)
-
-		if err != nil {
-			fmt.Println(err)
-			break
-		}
-	}
+	b := []byte("aaaaaaaaaaaaaaaaaaaaa\n")
+	_, err := conn.Write(b)
+	fmt.Println(err)
 }

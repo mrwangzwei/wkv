@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	tcp_socket.TcpServer()
+	tcp_socket.Client()
 
 	//dns.SendJson("127.0.0.1:9991", "wzw")
 

@@ -6,7 +6,6 @@ import (
 	"io"
 	"net"
 	"testing"
-	"time"
 )
 
 func TestTcpServer(t *testing.T) {
@@ -43,24 +42,17 @@ func handleConn(conn *net.TCPConn) {
 	}()
 
 	//获取一个连接的reader读取流
-	reader := bufio.NewReader(conn)
+	reader := bufio.NewReaderSize(conn, 20)
 	i := 0
 	//接收并返回消息
 	for {
-		message, err := reader.ReadString('\n')
+		i++
+		message, err := reader.ReadSlice('\n')
 		if err != nil || err == io.EOF {
+			fmt.Println("ReadSlice err", err)
 			break
 		}
-		fmt.Println("ReadString", message)
-
-		msg := time.Now().String() + conn.RemoteAddr().String() + " Server Say hello! \n"
-
-		b := []byte(msg)
-
-		conn.Write(b)
-
-		i++
-
+		fmt.Println("ReadSlice", string(message))
 		if i > 10 {
 			break
 		}
