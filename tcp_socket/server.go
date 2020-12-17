@@ -1,0 +1,68 @@
+package tcp_socket
+
+import (
+	"bufio"
+	"fmt"
+	"io"
+	"net"
+	"testing"
+	"time"
+)
+
+func TestTcpServer(t *testing.T) {
+	TcpServer()
+}
+
+func TcpServer() {
+	var tcpAddr *net.TCPAddr
+	//通过ResolveTCPAddr实例一个具体的tcp断点
+	tcpAddr, _ = net.ResolveTCPAddr("tcp", "127.0.0.1:9999")
+	//打开一个tcp断点监听
+	tcpListener, _ := net.ListenTCP("tcp", tcpAddr)
+	defer tcpListener.Close()
+	fmt.Println("Server ready to read ...")
+	//循环接收客户端的连接，创建一个协程具体去处理连接
+	for {
+		tcpConn, err := tcpListener.AcceptTCP()
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		fmt.Println("A client connected :" + tcpConn.RemoteAddr().String())
+		go handleConn(tcpConn)
+	}
+}
+
+func handleConn(conn *net.TCPConn) {
+	//tcp连接的地址
+	ipStr := conn.RemoteAddr().String()
+
+	defer func() {
+		fmt.Println(" Disconnected : " + ipStr)
+		conn.Close()
+	}()
+
+	//获取一个连接的reader读取流
+	reader := bufio.NewReader(conn)
+	i := 0
+	//接收并返回消息
+	for {
+		message, err := reader.ReadString('\n')
+		if err != nil || err == io.EOF {
+			break
+		}
+		fmt.Println("ReadString", message)
+
+		msg := time.Now().String() + conn.RemoteAddr().String() + " Server Say hello! \n"
+
+		b := []byte(msg)
+
+		conn.Write(b)
+
+		i++
+
+		if i > 10 {
+			break
+		}
+	}
+}

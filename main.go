@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	"wkv/dns"
+	"wkv/tcp_socket"
 )
 
 func main() {
+	tcp_socket.TcpServer()
 
-	dns.SendJson("127.0.0.1:9991", "wzw")
+	//dns.SendJson("127.0.0.1:9991", "wzw")
 
 	////测试recover
 	//aaa()
