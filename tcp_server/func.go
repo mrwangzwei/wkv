@@ -22,7 +22,9 @@ func (s *tcpServer) OnConnection(f OnConnectionFunc) {
 		for {
 			select {
 			case client := <-s.newFd:
-				go f(client.fd, client.addr) //考虑加协程池
+				if f != nil {
+					go f(client.fd, client.addr) //考虑加协程池
+				}
 			}
 		}
 	}()
@@ -35,7 +37,9 @@ func (s *tcpServer) OnDisConnection(f OnDisConnnectionFunc) {
 		for {
 			select {
 			case client := <-s.closeFd:
-				go f(client.fd, client.addr)
+				if f != nil {
+					go f(client.fd, client.addr)
+				}
 			}
 		}
 	}()
@@ -48,7 +52,9 @@ func (s *tcpServer) OnReceive(f OnReceiveFunc) {
 		for {
 			select {
 			case r := <-s.receiver:
-				go f(r.fd, r.data)
+				if f != nil {
+					go f(r.fd, r.data)
+				}
 			}
 		}
 	}()
