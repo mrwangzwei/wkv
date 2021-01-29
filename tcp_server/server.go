@@ -13,7 +13,7 @@ import (
 const (
 	defaultBufSize   int           = 4096             //默认读取buf
 	defaultCycleSize int           = 5000             //默认可维护的连接数量
-	defaultHeartBeat time.Duration = 30 * time.Second //默认连接心跳.ms
+	defaultHeartBeat time.Duration = 30 * time.Second //默认连接心跳.s
 )
 
 var (
@@ -53,7 +53,7 @@ type Config struct {
 	HeartBeat time.Duration //至少1秒
 }
 
-func NewTcpServer(addr string) *tcpServer {
+func NewTcpServer(addr string) (*tcpServer, error) {
 	conf := Config{
 		addr,
 		defaultCycleSize,
@@ -62,7 +62,10 @@ func NewTcpServer(addr string) *tcpServer {
 	return NewTcpServerWithConfig(conf)
 }
 
-func NewTcpServerWithConfig(conf Config) *tcpServer {
+func NewTcpServerWithConfig(conf Config) (*tcpServer, error) {
+	if conf.HeartBeat < time.Second {
+		return nil, errors.New("heart beat must over one second")
+	}
 	return &tcpServer{
 		addr:           conf.Url,
 		clients:        make([]*client, conf.Size),
@@ -71,7 +74,7 @@ func NewTcpServerWithConfig(conf Config) *tcpServer {
 		newFd:          make(chan *client),
 		closeFd:        make(chan *client),
 		receiver:       make(chan *receiver),
-	}
+	}, nil
 }
 
 func (s *tcpServer) StartServer() (err error) {

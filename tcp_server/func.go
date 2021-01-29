@@ -5,9 +5,9 @@ import (
 )
 
 type (
-	OnConnectionFunc     func(fd int, clientAddr string)
-	OnDisConnnectionFunc func(fd int, clientAddr string)
-	OnReceiveFunc        func(fd int, data []byte)
+	OnConnectionFunc    func(fd int, clientAddr string)
+	OnDisConnectionFunc func(fd int, clientAddr string)
+	OnReceiveFunc       func(fd int, data []byte)
 )
 
 type receiver struct {
@@ -30,7 +30,7 @@ func (s *tcpServer) OnConnection(f OnConnectionFunc) {
 	}()
 }
 
-func (s *tcpServer) OnDisConnection(f OnDisConnnectionFunc) {
+func (s *tcpServer) OnDisConnection(f OnDisConnectionFunc) {
 	s.onDisConn = true
 	go func() {
 		log.Println("OnDisConnection is already")

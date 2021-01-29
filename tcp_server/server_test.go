@@ -6,7 +6,11 @@ import (
 )
 
 func TestServer(t *testing.T) {
-	server := NewTcpServer("127.0.0.1:9900")
+	server, err := NewTcpServer("127.0.0.1:9900")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	server.OnConnection(connFunc)
 
@@ -14,7 +18,7 @@ func TestServer(t *testing.T) {
 
 	server.OnReceive(receiveMsg)
 
-	err := server.StartServer()
+	err = server.StartServer()
 	fmt.Println(err)
 }
 
