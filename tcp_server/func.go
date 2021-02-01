@@ -16,6 +16,9 @@ type receiver struct {
 }
 
 func (s *tcpServer) OnConnection(f OnConnectionFunc) {
+	if s.onConn {
+		return
+	}
 	s.onConn = true
 	go func() {
 		log.Println("OnConnection is already")
@@ -31,6 +34,9 @@ func (s *tcpServer) OnConnection(f OnConnectionFunc) {
 }
 
 func (s *tcpServer) OnDisConnection(f OnDisConnectionFunc) {
+	if s.onDisConn {
+		return
+	}
 	s.onDisConn = true
 	go func() {
 		log.Println("OnDisConnection is already")
@@ -46,6 +52,9 @@ func (s *tcpServer) OnDisConnection(f OnDisConnectionFunc) {
 }
 
 func (s *tcpServer) OnReceive(f OnReceiveFunc) {
+	if s.onMsg {
+		return
+	}
 	s.onMsg = true
 	go func() {
 		log.Println("OnReceive is already")

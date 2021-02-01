@@ -18,6 +18,8 @@ const (
 
 var (
 	OverMaxConn = errors.New("over max connect amount")
+	FdExist     = errors.New("fd not exist")
+	FdInvalid   = errors.New("fd is invalid")
 )
 
 type tcpServer struct {
@@ -47,14 +49,8 @@ type client struct {
 	lock    sync.Mutex
 }
 
-type Config struct {
-	Url       string        //server 地址
-	Size      int           //可维护的连接数量
-	HeartBeat time.Duration //至少1秒
-}
-
 func NewTcpServer(addr string) (*tcpServer, error) {
-	conf := Config{
+	conf := ServerConfig{
 		addr,
 		defaultCycleSize,
 		defaultHeartBeat,
@@ -62,9 +58,12 @@ func NewTcpServer(addr string) (*tcpServer, error) {
 	return NewTcpServerWithConfig(conf)
 }
 
-func NewTcpServerWithConfig(conf Config) (*tcpServer, error) {
+func NewTcpServerWithConfig(conf ServerConfig) (*tcpServer, error) {
 	if conf.HeartBeat < time.Second {
 		return nil, errors.New("heart beat must over one second")
+	}
+	if conf.Size == 0 {
+		conf.Size = defaultCycleSize
 	}
 	return &tcpServer{
 		addr:           conf.Url,
@@ -78,19 +77,6 @@ func NewTcpServerWithConfig(conf Config) (*tcpServer, error) {
 }
 
 func (s *tcpServer) StartServer() (err error) {
-	if !s.onConn {
-		err = errors.New("OnConnection func must be registered")
-		return
-	}
-	if !s.onDisConn {
-		err = errors.New("OnDisConnection func must be registered")
-		return
-	}
-	if !s.onMsg {
-		err = errors.New("OnReceive func must be registered")
-		return
-	}
-
 	var tcpAddr *net.TCPAddr
 	tcpAddr, err = net.ResolveTCPAddr("tcp", s.addr)
 	if err != nil {
@@ -119,9 +105,45 @@ func (s *tcpServer) StartServer() (err error) {
 			tcpConn.Close()
 			continue
 		}
-		s.newFd <- c
+		if s.onConn {
+			s.newFd <- c
+		}
 		go s.readConn(c)
 	}
+}
+
+func (s *tcpServer) Send(fd int, msg string) (err error) {
+	if fd > s.cliSize || fd < 1 {
+		err = FdExist
+		return
+	}
+	var cli *client
+	cli, err = s.searchFd(fd)
+	if err != nil {
+		return
+	}
+	_, err = cli.send(msg)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func (s *tcpServer) searchFd(fd int) (cli *client, err error) {
+	if fd > s.cliSize || fd < 1 {
+		err = FdExist
+		return
+	}
+	cli = s.clients[fd-1]
+	if cli == nil {
+		err = FdExist
+		return
+	}
+	if !cli.stat {
+		err = FdInvalid
+		return
+	}
+	return
 }
 
 func (s *tcpServer) addClient(conn *net.TCPConn) (c *client, err error) {
@@ -167,7 +189,9 @@ func (s *tcpServer) readConn(c *client) {
 	defer func() {
 		c.disable()
 		_ = c.conn.Close()
-		s.closeFd <- c
+		if s.onDisConn {
+			s.closeFd <- c
+		}
 	}()
 	//获取一个连接的reader读取流
 	reader := bufio.NewReaderSize(c.conn, defaultBufSize)
@@ -177,7 +201,9 @@ func (s *tcpServer) readConn(c *client) {
 		if err != nil || err == io.EOF {
 			return
 		}
-		s.receiver <- &receiver{c.fd, message}
+		if s.onMsg {
+			s.receiver <- &receiver{c.fd, message}
+		}
 		c.beatHeart()
 	}
 }
@@ -198,6 +224,11 @@ func (cli *client) disable() {
 	cli.lock.Lock()
 	defer cli.lock.Unlock()
 	cli.stat = false
+}
+
+func (cli *client) send(msg string) (len int, err error) {
+	len, err = cli.conn.Write([]byte(msg))
+	return
 }
 
 func (s *tcpServer) checkHeartBeat() {

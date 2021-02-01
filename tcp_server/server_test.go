@@ -5,31 +5,46 @@ import (
 	"testing"
 )
 
+var svr *tcpServer
+
 func TestServer(t *testing.T) {
-	server, err := NewTcpServer("127.0.0.1:9900")
+	conf := ServerConfig{Url: "127.0.0.1:9900"}
+	svr, err := NewTcpServerWithConfig(conf)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	server.OnConnection(connFunc)
+	//注册监听方法，只有第一个生效
+	svr.OnConnection(connFunc)
+	svr.OnConnection(connFunc2)
 
-	server.OnDisConnection(disConnFunc)
+	svr.OnDisConnection(disConnFunc)
 
-	server.OnReceive(receiveMsg)
+	svr.OnReceive(receiveMsg)
 
-	err = server.StartServer()
+	err = svr.StartServer()
 	fmt.Println(err)
 }
 
 func connFunc(fd int, addr string) {
-	fmt.Println(fd, addr)
+	fmt.Println("connected", fd, addr)
+	err := svr.Send(fd, "welcome")
+	fmt.Println("send", fd, err)
+}
+
+func connFunc2(fd int, addr string) {
+	fmt.Println("connected 222222", fd, addr)
+	err := svr.Send(fd, "welcome 222222")
+	fmt.Println("send 222222", fd, err)
 }
 
 func disConnFunc(fd int, addr string) {
-	fmt.Println(fd, addr)
+	fmt.Println("disconnected", fd, addr)
 }
 
 func receiveMsg(fd int, data []byte) {
-	fmt.Println(fd, string(data))
+	fmt.Println("new msg", fd, string(data))
+	err := svr.Send(fd, "welcome")
+	fmt.Println("answer", fd, err)
 }
