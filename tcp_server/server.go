@@ -23,7 +23,7 @@ type TcpServer struct {
 	newFd          chan *newConn  //新连接通知
 	closeFd        chan *disConn  //连接关闭通知
 	receiver       chan *receiver //新消息通知
-	cliCloseCh     chan *cliClose //同意关闭连接入口
+	cliCloseCh     chan *cliClose //统一关闭连接入口
 	onConn         bool           //是否注册连接通知
 	onDisConn      bool           //是否注册关闭连接通知
 	onMsg          bool           //是否注册新消息通知
