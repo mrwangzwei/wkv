@@ -1,16 +1,12 @@
 package tcp_client
 
 import (
+	"bufio"
 	"errors"
-	"fmt"
+	"io"
 	"net"
+	"sync"
 	"time"
-)
-
-const (
-	defaultBufSize   int           = 4096             //默认读取buf
-	defaultCycleSize int           = 5000             //默认可维护的连接数量
-	defaultHeartBeat time.Duration = 15 * time.Second //默认连接心跳.s
 )
 
 type client struct {
@@ -21,6 +17,7 @@ type client struct {
 	disConCh  chan bool
 	onMsg     bool
 	onDisCon  bool
+	lock      sync.Mutex
 }
 
 func NewCli(host string) (*client, error) {
@@ -47,12 +44,60 @@ func (cli *client) StartClient(str string) (err error) {
 		return
 	}
 	cli.conn = conn
+	go cli.beatHeart()
 
-	fmt.Println(cli.conn.LocalAddr().String() + " : Client connected!")
-	_, err = cli.conn.Write([]byte(str + "\n"))
+	go cli.readMsg()
 	return nil
 }
 
+func (cli *client) Send(msg string) (l int, err error) {
+	if len(msg) < 1 {
+		err = EmptyMsg
+		return
+	}
+	l, err = cli.conn.Write([]byte(msg + "\n"))
+	return
+}
+
+func (cli *client) beatHeart() {
+	ticker := time.NewTicker(time.Second)
+	for {
+		<-ticker.C
+		if cli == nil {
+			return
+		}
+		func() {
+			cli.lock.Lock()
+			defer cli.lock.Unlock()
+			if cli.conn == nil {
+				return
+			}
+			_, _ = cli.conn.Write([]byte("\n"))
+		}()
+	}
+}
+
 func (cli *client) Close() {
-	cli.conn.Close()
+	_ = cli.conn.Close()
+}
+
+func (cli *client) readMsg() {
+	defer func() {
+		_ = cli.conn.Close()
+		if cli.onDisCon {
+			cli.disConCh <- true
+		}
+	}()
+	//获取一个连接的reader读取流
+	reader := bufio.NewReaderSize(cli.conn, defaultBufSize)
+	//接收并返回消息
+	for {
+		message, err := buffReader(reader)
+		if err != nil || err == io.EOF {
+			return
+		}
+		if len(message) > 0 && cli.onMsg {
+			cli.msgCh <- message
+		}
+	}
 }

@@ -10,18 +10,6 @@ import (
 	"time"
 )
 
-const (
-	defaultBufSize   int           = 4096             //默认读取buf
-	defaultCycleSize int           = 5000             //默认可维护的连接数量
-	defaultHeartBeat time.Duration = 30 * time.Second //默认连接心跳.s
-)
-
-var (
-	OverMaxConn = errors.New("over max connect amount")
-	FdExist     = errors.New("fd not exist")
-	FdInvalid   = errors.New("fd is invalid")
-)
-
 type tcpServer struct {
 	addr           string
 	listener       *net.TCPListener
@@ -201,7 +189,7 @@ func (s *tcpServer) readConn(c *client) {
 		if err != nil || err == io.EOF {
 			return
 		}
-		if s.onMsg {
+		if len(message) > 0 && s.onMsg {
 			s.receiver <- &receiver{c.fd, message}
 		}
 		c.beatHeart()
@@ -226,32 +214,35 @@ func (cli *client) disable() {
 	cli.stat = false
 }
 
-func (cli *client) send(msg string) (len int, err error) {
-	len, err = cli.conn.Write([]byte(msg))
+func (cli *client) send(msg string) (l int, err error) {
+	l, err = cli.conn.Write([]byte(msg))
 	return
 }
 
 func (s *tcpServer) checkHeartBeat() {
 	ticker := time.NewTicker(time.Second)
 	for {
-		<-ticker.C
-		for _, cli := range s.clients {
-			func() {
-				if cli == nil {
-					return
-				}
-				cli.lock.Lock()
-				defer cli.lock.Unlock()
-				now := time.Now().Unix()
-				if cli.stat == false {
-					return
-				}
-				//心跳超时。主动关闭连接
-				if (now - cli.heartAt) > int64(s.heartBeatLimit)/1e9 {
-					cli.stat = false
-					_ = cli.conn.Close()
-				}
-			}()
+		select {
+		case <-ticker.C:
+			for _, cli := range s.clients {
+				func() {
+					if cli == nil {
+						return
+					}
+					cli.lock.Lock()
+					defer cli.lock.Unlock()
+					now := time.Now().Unix()
+					if cli.stat == false {
+						return
+					}
+					//心跳超时。主动关闭连接
+					if (now - cli.heartAt) > int64(s.heartBeatLimit)/1e9 {
+						cli.stat = false
+						_ = cli.conn.Close()
+					}
+				}()
+			}
 		}
+
 	}
 }
