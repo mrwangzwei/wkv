@@ -98,7 +98,7 @@ func (s *TcpServer) StartServer() (err error) {
 		}
 		c, err := s.addClient(tcpConn)
 		if err != nil {
-			log.Println("add new client conn err", err)
+			log.Println("add new client conn err:", err, tcpConn.RemoteAddr().String())
 			tcpConn.Close()
 			continue
 		}
@@ -166,6 +166,7 @@ func (s *TcpServer) addClient(conn *net.TCPConn) (c *client, err error) {
 						return
 					}
 				}
+				s.cursor++
 			} else {
 				break
 			}
