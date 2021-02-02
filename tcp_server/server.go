@@ -205,15 +205,12 @@ func (s *TcpServer) closeCli(cli *client, err error) {
 }
 
 func (s *TcpServer) listenCloseCli() {
-	for {
-		select {
-		case c := <-s.cliCloseCh:
-			res := c.cli.disable()
-			if res {
-				_ = c.cli.conn.Close()
-				if s.onDisConn {
-					s.closeFd <- &disConn{fd: c.cli.fd, addr: c.cli.addr, err: c.err}
-				}
+	for c := range s.cliCloseCh {
+		res := c.cli.disable()
+		if res {
+			_ = c.cli.conn.Close()
+			if s.onDisConn {
+				s.closeFd <- &disConn{fd: c.cli.fd, addr: c.cli.addr, err: c.err}
 			}
 		}
 	}

@@ -52,3 +52,21 @@ func receiveMsg(fd int, data []byte) {
 	err := svr.Send(fd, "receiveMsg")
 	fmt.Println("answer", fd, err)
 }
+
+func TestChannel(t *testing.T) {
+	cc := make(chan int)
+	go func() {
+		for {
+			select {
+			case a := <-cc:
+				fmt.Println(a)
+			default:
+			}
+		}
+
+	}()
+	cc <- 2
+	close(cc)
+	time.Sleep(2 * time.Second)
+
+}

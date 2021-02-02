@@ -33,12 +33,9 @@ func (s *TcpServer) OnConnection(f OnConnectionFunc) {
 	s.onConn = true
 	go func() {
 		log.Println("OnConnection is already")
-		for {
-			select {
-			case client := <-s.newFd:
-				if f != nil {
-					go f(client.fd, client.addr) //考虑加协程池
-				}
+		for client := range s.newFd {
+			if f != nil {
+				go f(client.fd, client.addr) //考虑加协程池
 			}
 		}
 	}()
@@ -51,12 +48,9 @@ func (s *TcpServer) OnDisConnection(f OnDisConnectionFunc) {
 	s.onDisConn = true
 	go func() {
 		log.Println("OnDisConnection is already")
-		for {
-			select {
-			case dis := <-s.closeFd:
-				if f != nil {
-					go f(dis.fd, dis.addr, dis.err)
-				}
+		for dis := range s.closeFd {
+			if f != nil {
+				go f(dis.fd, dis.addr, dis.err)
 			}
 		}
 	}()
@@ -69,12 +63,9 @@ func (s *TcpServer) OnReceive(f OnReceiveFunc) {
 	s.onMsg = true
 	go func() {
 		log.Println("OnReceive is already")
-		for {
-			select {
-			case r := <-s.receiver:
-				if f != nil {
-					go f(r.fd, r.data)
-				}
+		for r := range s.receiver {
+			if f != nil {
+				go f(r.fd, r.data)
 			}
 		}
 	}()
