@@ -10,14 +10,15 @@ import (
 )
 
 type client struct {
-	conn      *net.TCPConn
-	svrAddr   string
-	heartBeat time.Duration
-	msgCh     chan []byte
-	disConCh  chan bool
-	onMsg     bool
-	onDisCon  bool
-	lock      sync.Mutex
+	conn           *net.TCPConn
+	svrAddr        string
+	heartBeat      time.Duration
+	heartBeatClose chan bool
+	msgCh          chan []byte
+	disConCh       chan bool
+	onMsg          bool
+	onDisCon       bool
+	lock           sync.Mutex
 }
 
 func NewCli(host string) (*client, error) {
@@ -30,10 +31,11 @@ func NewCliWithConfig(conf Config) (*client, error) {
 		return nil, errors.New("heart beat must over one second")
 	}
 	return &client{
-		svrAddr:   conf.Addr,
-		heartBeat: conf.HeartBeat,
-		msgCh:     make(chan []byte),
-		disConCh:  make(chan bool),
+		svrAddr:        conf.Addr,
+		heartBeat:      conf.HeartBeat,
+		heartBeatClose: make(chan bool),
+		msgCh:          make(chan []byte),
+		disConCh:       make(chan bool),
 	}, nil
 }
 
@@ -67,32 +69,31 @@ func (cli *client) Send(msg string) (l int, err error) {
 func (cli *client) beatHeart() {
 	ticker := time.NewTicker(cli.heartBeat)
 	for {
-		<-ticker.C
-		if cli == nil {
-			return
-		}
-		func() {
-			cli.lock.Lock()
-			defer cli.lock.Unlock()
-			if cli.conn == nil {
+		select {
+		case <-ticker.C:
+			if cli == nil || cli.conn == nil {
 				return
 			}
 			_, _ = cli.conn.Write([]byte("B" + "\n"))
-		}()
+		case <-cli.heartBeatClose:
+			return
+		}
+
 	}
 }
 
 func (cli *client) Close() {
 	_ = cli.conn.Close()
+	cli.conn = nil
+	if cli.onDisCon {
+		cli.disConCh <- true
+	}
+	close(cli.msgCh)
+	close(cli.disConCh)
 }
 
 func (cli *client) readMsg() {
-	defer func() {
-		_ = cli.conn.Close()
-		if cli.onDisCon {
-			cli.disConCh <- true
-		}
-	}()
+	defer cli.Close()
 	//获取一个连接的reader读取流
 	reader := bufio.NewReaderSize(cli.conn, defaultBufSize)
 	//接收并返回消息

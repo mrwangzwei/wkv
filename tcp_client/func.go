@@ -11,12 +11,9 @@ func (cli *client) OnMsg(f OnReceiveFunc) {
 	}
 	cli.onMsg = true
 	go func() {
-		for {
-			select {
-			case d := <-cli.msgCh:
-				if f != nil {
-					go f(d) //考虑加协程池
-				}
+		for d := range cli.msgCh {
+			if f != nil {
+				go f(d) //考虑加协程池
 			}
 		}
 	}()
@@ -28,12 +25,9 @@ func (cli *client) OnDisconnected(f OnDisConnectedFunc) {
 	}
 	cli.onDisCon = true
 	go func() {
-		for {
-			select {
-			case _ = <-cli.disConCh:
-				if f != nil {
-					go f() //考虑加协程池
-				}
+		for _ = range cli.disConCh {
+			if f != nil {
+				go f() //考虑加协程池
 			}
 		}
 	}()
