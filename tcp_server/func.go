@@ -6,16 +6,27 @@ import (
 
 type (
 	OnConnectionFunc    func(fd int, clientAddr string)
-	OnDisConnectionFunc func(fd int, clientAddr string)
+	OnDisConnectionFunc func(fd int, clientAddr string, err error)
 	OnReceiveFunc       func(fd int, data []byte)
 )
+
+type newConn struct {
+	fd   int
+	addr string
+}
+
+type disConn struct {
+	fd   int
+	addr string
+	err  error
+}
 
 type receiver struct {
 	fd   int
 	data []byte
 }
 
-func (s *tcpServer) OnConnection(f OnConnectionFunc) {
+func (s *TcpServer) OnConnection(f OnConnectionFunc) {
 	if s.onConn {
 		return
 	}
@@ -33,7 +44,7 @@ func (s *tcpServer) OnConnection(f OnConnectionFunc) {
 	}()
 }
 
-func (s *tcpServer) OnDisConnection(f OnDisConnectionFunc) {
+func (s *TcpServer) OnDisConnection(f OnDisConnectionFunc) {
 	if s.onDisConn {
 		return
 	}
@@ -42,16 +53,16 @@ func (s *tcpServer) OnDisConnection(f OnDisConnectionFunc) {
 		log.Println("OnDisConnection is already")
 		for {
 			select {
-			case client := <-s.closeFd:
+			case dis := <-s.closeFd:
 				if f != nil {
-					go f(client.fd, client.addr)
+					go f(dis.fd, dis.addr, dis.err)
 				}
 			}
 		}
 	}()
 }
 
-func (s *tcpServer) OnReceive(f OnReceiveFunc) {
+func (s *TcpServer) OnReceive(f OnReceiveFunc) {
 	if s.onMsg {
 		return
 	}

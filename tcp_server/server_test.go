@@ -3,13 +3,15 @@ package tcp_server
 import (
 	"fmt"
 	"testing"
+	"time"
 )
 
-var svr *tcpServer
+var svr *TcpServer
 
 func TestServer(t *testing.T) {
-	conf := ServerConfig{Url: "127.0.0.1:9900"}
-	svr, err := NewTcpServerWithConfig(conf)
+	var err error
+	conf := ServerConfig{Url: "127.0.0.1:9900", HeartBeat: 5 * time.Second}
+	svr, err = NewTcpServerWithConfig(conf)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -23,8 +25,10 @@ func TestServer(t *testing.T) {
 
 	svr.OnReceive(receiveMsg)
 
-	err = svr.StartServer()
-	fmt.Println(err)
+	if err = svr.StartServer(); err != nil {
+		fmt.Println(err)
+		return
+	}
 }
 
 func connFunc(fd int, addr string) {
@@ -39,12 +43,12 @@ func connFunc2(fd int, addr string) {
 	fmt.Println("send 222222", fd, err)
 }
 
-func disConnFunc(fd int, addr string) {
-	fmt.Println("disconnected", fd, addr)
+func disConnFunc(fd int, addr string, err error) {
+	fmt.Println("disconnected", fd, addr, err)
 }
 
 func receiveMsg(fd int, data []byte) {
 	fmt.Println("new msg", fd, string(data))
-	err := svr.Send(fd, "welcome")
+	err := svr.Send(fd, "receiveMsg")
 	fmt.Println("answer", fd, err)
 }

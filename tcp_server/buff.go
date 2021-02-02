@@ -18,7 +18,7 @@ func buffReader(reader *bufio.Reader) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	i := len(message) - 2
+	i := len(message) - 1
 	if i < 0 {
 		return nil, errors.New("nil read")
 	}

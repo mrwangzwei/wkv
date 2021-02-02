@@ -29,10 +29,15 @@ func NewCliWithConfig(conf Config) (*client, error) {
 	if conf.HeartBeat < time.Second {
 		return nil, errors.New("heart beat must over one second")
 	}
-	return &client{svrAddr: conf.Addr, heartBeat: conf.HeartBeat}, nil
+	return &client{
+		svrAddr:   conf.Addr,
+		heartBeat: conf.HeartBeat,
+		msgCh:     make(chan []byte),
+		disConCh:  make(chan bool),
+	}, nil
 }
 
-func (cli *client) StartClient(str string) (err error) {
+func (cli *client) StartClient() (err error) {
 	var tcpAddr *net.TCPAddr
 	tcpAddr, err = net.ResolveTCPAddr("tcp", cli.svrAddr)
 	if err != nil {
@@ -60,7 +65,7 @@ func (cli *client) Send(msg string) (l int, err error) {
 }
 
 func (cli *client) beatHeart() {
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(cli.heartBeat)
 	for {
 		<-ticker.C
 		if cli == nil {
@@ -72,7 +77,7 @@ func (cli *client) beatHeart() {
 			if cli.conn == nil {
 				return
 			}
-			_, _ = cli.conn.Write([]byte("\n"))
+			_, _ = cli.conn.Write([]byte("B" + "\n"))
 		}()
 	}
 }
@@ -93,10 +98,11 @@ func (cli *client) readMsg() {
 	//接收并返回消息
 	for {
 		message, err := buffReader(reader)
+
 		if err != nil || err == io.EOF {
 			return
 		}
-		if len(message) > 0 && cli.onMsg {
+		if cli.onMsg {
 			cli.msgCh <- message
 		}
 	}

@@ -7,14 +7,16 @@ import (
 
 const (
 	defaultBufSize   int           = 4096             //默认读取buf
-	defaultCycleSize int           = 5000             //默认可维护的连接数量
+	defaultCycleSize int           = 10000            //默认可维护的连接数量
 	defaultHeartBeat time.Duration = 30 * time.Second //默认连接心跳.s
 )
 
 var (
-	OverMaxConn = errors.New("over max connect amount")
-	FdExist     = errors.New("fd not exist")
-	FdInvalid   = errors.New("fd is invalid")
+	OverMaxConn      = errors.New("over max connect amount")
+	FdNotExist       = errors.New("fd not exist")
+	FdInvalid        = errors.New("fd is invalid")
+	cliDisconnected  = errors.New("client disconnected")
+	cliHeartOverTime = errors.New("client heartbeat over time")
 )
 
 type ServerConfig struct {
