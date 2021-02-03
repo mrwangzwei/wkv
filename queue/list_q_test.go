@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"runtime"
 	"testing"
-	"time"
 )
 
 func TestNewListQueue(t *testing.T) {
@@ -15,7 +14,7 @@ func TestNewListQueue(t *testing.T) {
 	q := NewListQueue(1000000)
 
 	for i := 0; i < 1000000; i++ {
-		if err := q.Push("aaaaaaaaaaaaaaaaaa"); err != nil {
+		if err := q.Push([]byte("aaaaaaaaaaaaaaaaaa")); err != nil {
 			fmt.Println(err)
 		}
 	}
@@ -31,15 +30,15 @@ func TestNewListQueue(t *testing.T) {
 	fmt.Println(m)
 
 	for i := 0; i < 10000; i++ {
-		if err := q.Push("aaaaaaaaaaaaaaaaaa"); err != nil {
+		if err := q.Push([]byte("aaaaaaaaaaaaaaaaaa")); err != nil {
 			fmt.Println(err)
 		}
 	}
 
-	time.Sleep(121 * time.Second)
+	//time.Sleep(121 * time.Second)
 	runtime.ReadMemStats(m)
 	fmt.Println(m)
 
 	cont, err := q.Pull()
-	fmt.Println(cont, err)
+	fmt.Println(string(cont), err)
 }

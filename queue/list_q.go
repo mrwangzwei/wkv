@@ -14,7 +14,7 @@ type listQueue struct {
 }
 
 type listNode struct {
-	cont string
+	cont []byte //[]byte：为了使用的时候方便点，但占用内存比string多一倍，可能原因是slice结构体元素多了一个cap
 	next *listNode
 }
 
@@ -22,7 +22,7 @@ func NewListQueue(size uint) Queue {
 	return &listQueue{size: size}
 }
 
-func (q *listQueue) Pull() (cont string, err error) {
+func (q *listQueue) Pull() (cont []byte, err error) {
 	q.lc.Lock()
 	defer q.lc.Unlock()
 	if q.headNode == nil {
@@ -37,7 +37,7 @@ func (q *listQueue) Pull() (cont string, err error) {
 	return
 }
 
-func (q *listQueue) Push(cont string) (err error) {
+func (q *listQueue) Push(cont []byte) (err error) {
 	q.lc.Lock()
 	defer q.lc.Unlock()
 	if q.l == int(q.size) {
@@ -61,7 +61,7 @@ func (q *listQueue) Len() int {
 	return q.l
 }
 
-func (n *listNode) push(cont string) *listNode {
+func (n *listNode) push(cont []byte) *listNode {
 	if n.next == nil {
 		n.next = &listNode{cont: cont}
 		return n.next
@@ -69,6 +69,6 @@ func (n *listNode) push(cont string) *listNode {
 	return n.next.push(cont)
 }
 
-func (n *listNode) pull() (string, *listNode) {
+func (n *listNode) pull() ([]byte, *listNode) {
 	return n.cont, n.next
 }

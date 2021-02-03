@@ -1,7 +1,7 @@
 package queue
 
 type Queue interface {
-	Pull() (string, error)
-	Push(cont string) error
+	Pull() ([]byte, error)
+	Push(cont []byte) error
 	Len() int
 }
