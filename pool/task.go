@@ -15,7 +15,6 @@ type task struct {
 	h      handleF     //要执行的方法
 	params interface{} //方法的参数
 	ph     pHandleF    //异常或执行出错(error)后要执行的方法
-	//taskId string      //自生成的任务id....暂时没什么用，看之后要不要扩展一个id:*task来做任务回源
 }
 
 //执行任务

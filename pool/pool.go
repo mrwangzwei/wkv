@@ -10,8 +10,8 @@ type Pool struct {
 	taskChan chan *task
 	//waitRunChan chan *task		//考虑加个待运行缓冲，taskChan就要有大小限制，在pool close的时候，还没有到taskChan的就直接丢弃了，已经在的就先执行完再close
 	running int
-	lc      *sync.Mutex
-	wg      *sync.WaitGroup
+	lc      sync.Mutex
+	wg      sync.WaitGroup
 }
 
 func NewPool(size int) (*Pool, error) {
@@ -21,8 +21,6 @@ func NewPool(size int) (*Pool, error) {
 	return &Pool{
 		poolSize: size,
 		taskChan: make(chan *task),
-		lc:       &sync.Mutex{},
-		wg:       &sync.WaitGroup{},
 	}, nil
 }
 
