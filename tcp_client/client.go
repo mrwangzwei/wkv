@@ -88,8 +88,14 @@ func (cli *client) Close() {
 	if cli.onDisCon {
 		cli.disConCh <- true
 	}
+	cli.heartBeatClose <- true
 	close(cli.msgCh)
 	close(cli.disConCh)
+}
+
+func (cli *client) ReConn() (err error) {
+	err = cli.StartClient()
+	return
 }
 
 func (cli *client) readMsg() {
