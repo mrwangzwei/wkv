@@ -11,7 +11,11 @@ func TestNewListQueue(t *testing.T) {
 	runtime.ReadMemStats(m)
 	fmt.Println(m)
 
-	q := NewListQueue(1000000)
+	q, err := NewListQueue(1000000)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	for i := 0; i < 1000000; i++ {
 		if err := q.Push([]byte("aaaaaaaaaaaaaaaaaa")); err != nil {

@@ -7,7 +7,7 @@ import (
 
 type listQueue struct {
 	l        int //当前队列长度
-	size     uint
+	size     int
 	headNode *listNode
 	tailNode *listNode
 	lc       sync.RWMutex
@@ -18,8 +18,11 @@ type listNode struct {
 	next *listNode
 }
 
-func NewListQueue(size uint) Queue {
-	return &listQueue{size: size}
+func NewListQueue(size int) (Queue, error) {
+	if size < -1 {
+		return nil, errors.New("invalid size")
+	}
+	return &listQueue{size: size}, nil
 }
 
 func (q *listQueue) Pull() (cont []byte, err error) {
@@ -38,7 +41,7 @@ func (q *listQueue) Pull() (cont []byte, err error) {
 }
 
 func (q *listQueue) Push(cont []byte) (err error) {
-	if q.l == int(q.size) {
+	if q.l == q.size {
 		err = errors.New("over max size")
 		return
 	}
