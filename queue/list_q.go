@@ -23,8 +23,6 @@ func NewListQueue(size uint) Queue {
 }
 
 func (q *listQueue) Pull() (cont []byte, err error) {
-	q.lc.Lock()
-	defer q.lc.Unlock()
 	if q.headNode == nil {
 		err = errors.New("empty queue")
 		return
@@ -33,13 +31,13 @@ func (q *listQueue) Pull() (cont []byte, err error) {
 	if q.headNode == nil {
 		q.tailNode = nil
 	}
+	q.lc.Lock()
 	q.l--
+	q.lc.Unlock()
 	return
 }
 
 func (q *listQueue) Push(cont []byte) (err error) {
-	q.lc.Lock()
-	defer q.lc.Unlock()
 	if q.l == int(q.size) {
 		err = errors.New("over max size")
 		return
@@ -51,7 +49,9 @@ func (q *listQueue) Push(cont []byte) (err error) {
 	} else {
 		q.tailNode = q.tailNode.push(cont)
 	}
+	q.lc.Lock()
 	q.l++
+	q.lc.Unlock()
 	return
 }
 
