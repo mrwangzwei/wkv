@@ -68,6 +68,7 @@ func (cli *client) Send(msg string) (l int, err error) {
 
 func (cli *client) beatHeart() {
 	ticker := time.NewTicker(cli.heartBeat)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:

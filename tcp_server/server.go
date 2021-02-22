@@ -245,6 +245,7 @@ func (cli *client) send(msg string) (l int, err error) {
 
 func (s *TcpServer) checkHeartBeat() {
 	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:
