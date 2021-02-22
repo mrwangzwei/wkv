@@ -27,6 +27,8 @@ type receiver struct {
 }
 
 func (s *TcpServer) OnConnection(f OnConnectionFunc) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
 	if s.onConn {
 		return
 	}
@@ -42,6 +44,8 @@ func (s *TcpServer) OnConnection(f OnConnectionFunc) {
 }
 
 func (s *TcpServer) OnDisConnection(f OnDisConnectionFunc) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
 	if s.onDisConn {
 		return
 	}
@@ -57,6 +61,8 @@ func (s *TcpServer) OnDisConnection(f OnDisConnectionFunc) {
 }
 
 func (s *TcpServer) OnReceive(f OnReceiveFunc) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
 	if s.onMsg {
 		return
 	}
