@@ -31,7 +31,7 @@ func (q *arrQueue) Push(cont []byte) error {
 	q.useSize++
 	q.cont[q.tailArrow] = cont
 	q.tailArrow++
-	if int(q.tailArrow) >= len(q.cont) {
+	if q.tailArrow >= len(q.cont) {
 		q.tailArrow = 0
 	}
 	return nil
