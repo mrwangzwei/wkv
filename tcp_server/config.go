@@ -17,6 +17,8 @@ var (
 	FdInvalid        = errors.New("fd is invalid")
 	cliDisconnected  = errors.New("client disconnected")
 	cliHeartOverTime = errors.New("client heartbeat over time")
+	cliClosed        = errors.New("client already closed")
+	cliNotExist      = errors.New("client not exist")
 )
 
 type ServerConfig struct {

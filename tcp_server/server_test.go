@@ -45,6 +45,8 @@ func connFunc2(fd int, addr string) {
 
 func disConnFunc(fd int, addr string, err error) {
 	fmt.Println("disconnected", fd, addr, err)
+	cerr := svr.Close(fd)
+	fmt.Println(cerr)
 }
 
 func receiveMsg(fd int, data []byte) {

@@ -204,6 +204,19 @@ func (s *TcpServer) closeCli(cli *client, err error) {
 	s.cliCloseCh <- &cliClose{cli: cli, err: err}
 }
 
+func (s *TcpServer) Close(fd int) (err error) {
+	if cli := s.clients[fd]; cli != nil {
+		if cli.stat == true {
+			s.cliCloseCh <- &cliClose{cli: cli, err: err}
+			return
+		}
+		err = cliClosed
+		return
+	}
+	err = cliNotExist
+	return
+}
+
 func (s *TcpServer) listenCloseCli() {
 	for c := range s.cliCloseCh {
 		res := c.cli.disable()
