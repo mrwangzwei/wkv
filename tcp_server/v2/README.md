@@ -13,3 +13,5 @@
 - 3.增加server的Close接口
 
 可使用此接口来释放所有连接和资源
+
+- 4.针对每个client连接新增context
