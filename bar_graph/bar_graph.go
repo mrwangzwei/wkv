@@ -29,11 +29,11 @@ func (t *BarTable) init() {
 }
 
 func (t *BarTable) SwapAndDraw(i, j int) {
-	draw(t.data, t.x, t.y, true, i, j)
+	draw(t.data, t.x, t.y, false, i, j)
 	if i < t.x && j < t.y {
 		t.data[i], t.data[j] = t.data[j], t.data[i]
 	}
-	draw(t.data, t.x, t.y, true, i, j)
+	draw(t.data, t.x, t.y, false, i, j)
 	draw(t.data, t.x, t.y, false)
 }
 
