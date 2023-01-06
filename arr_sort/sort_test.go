@@ -31,8 +31,40 @@ func randArr(len int) []int {
 	return arr
 }
 
-func TestQuickSortDesc(t *testing.T) {
-	aaa := []int{2, 3, 5, 1, 7, 2, 324, 678, 2, 54, 1567, 7893, 23, 7, 4}
-	QuickSortDesc(aaa)
-	fmt.Println(aaa)
+func TestQuickSort(t *testing.T) {
+	sli := []int{1, 2, 6, 9, 6, 7, 8, 9, 10, 2, 3, 4, 5}
+	QuickSort(sli)
+	fmt.Println(sli)
+}
+
+func TestQuickSortSlice(t *testing.T) {
+	sli := []int{1, 2, 6, 9, 6, 7, 8, 9, 10, 2, 3, 4, 5}
+	quickSort(sli, func(i, j int) bool {
+		return sli[i] < sli[j]
+	})
+	fmt.Println(sli)
+}
+
+func TestSortBubbleSlice(t *testing.T) {
+	sli := []int{1, 2, 6, 9, 6, 7, 8, 9, 10, 2, 3, 4, 5}
+	SortBubbleSlice(sli, func(i, j int) bool {
+		return sli[i] > sli[j]
+	})
+	fmt.Println(sli)
+}
+
+func TestSelectionSort(t *testing.T) {
+	sli := []int{1, 2, 6, 9, 6, 7, 8, 9, 10, 2, 3, 4, 5}
+	SelectionSort(sli, func(i, j int) bool {
+		return sli[i] < sli[j]
+	})
+	fmt.Println(sli)
+}
+
+func TestInsertSort(t *testing.T) {
+	sli := []int{1, 2, 6, 9, 6, 7, 8, 9, 10, 2, 3, 4, 5}
+	InsertSort(sli, func(i, j int) bool {
+		return sli[i] > sli[j]
+	})
+	fmt.Println(sli)
 }
